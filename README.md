@@ -7,7 +7,7 @@
 - 作者标识：`Duan`
 - OpenWrt 分支：`openwrt-25.12`
 - 自动编译时间：每天北京时间 04:10
-- 固件产物：GitHub Actions artifact，保留 14 天
+- 固件产物：编译完成后自动发布到 GitHub Releases，同时保留 GitHub Actions artifact 14 天
 - rootfs 分区：默认 4GB，适合 OpenClash + Docker + 主路由插件
 - x86 输出格式：erofs、ext4、squashfs、gzip、EFI/GRUB、ISO、VDI、VMDK、VHDX
 - 可写层扩容：首次启动时自动把系统盘剩余空间创建为 Btrfs 第 3 分区，并配置为 `/overlay` extroot
@@ -84,15 +84,22 @@
 
 ## 下载固件
 
-编译完成后，进入 GitHub Actions 对应运行记录，在页面底部 `Artifacts` 下载：
+编译完成后，优先进入仓库右侧或顶部的 `Releases` 下载。每次运行会创建一个类似下面的 Release：
+
+```text
+Duan-OpenWrt-openwrt-25.12-运行编号
+```
+
+Release 里会包含每个设备对应的 zip 资产：
 
 ```text
 Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号
 Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号
 Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号
+SHA256SUMS.txt
 ```
 
-每个 artifact 内会包含：
+每个设备 zip 内会包含：
 
 - `BUILD_INFO.txt`：作者、设备、默认地址、默认登录、分区大小和构建时间
 - `SHA256SUMS.txt`：顶层校验文件，方便刷写前核对固件是否完整
