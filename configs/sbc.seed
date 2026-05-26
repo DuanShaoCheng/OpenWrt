@@ -1,0 +1,13 @@
+# Extra packages for SBC and large-storage targets.
+CONFIG_TARGET_IMAGES_GZIP=y
+CONFIG_TARGET_ROOTFS_EXT4FS=y
+CONFIG_TARGET_ROOTFS_PARTSIZE=1024
+CONFIG_PACKAGE_block-mount=y
+CONFIG_PACKAGE_curl=y
+CONFIG_PACKAGE_htop=y
+CONFIG_PACKAGE_iperf3=y
+CONFIG_PACKAGE_kmod-fs-ext4=y
+CONFIG_PACKAGE_kmod-usb-storage=y
+CONFIG_PACKAGE_kmod-usb3=y
+CONFIG_PACKAGE_tcpdump=y
+CONFIG_PACKAGE_wget-ssl=y
