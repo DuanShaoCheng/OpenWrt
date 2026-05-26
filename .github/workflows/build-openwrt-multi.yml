@@ -27,6 +27,10 @@ permissions:
 env:
   OPENWRT_REPO: https://github.com/openwrt/openwrt.git
   OPENWRT_BRANCH: openwrt-25.12
+  BUILD_AUTHOR: Duan
+  DEFAULT_IP: 10.0.0.1
+  DEFAULT_LOGIN: root/root
+  ROOTFS_PARTSIZE_MB: "4096"
   TZ: Asia/Shanghai
 
 jobs:
@@ -61,9 +65,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential clang flex bison g++ gawk gcc-multilib \
-            g++-multilib gettext git libelf-dev libncurses-dev libssl-dev \
+            g++-multilib genisoimage gettext git libelf-dev libncurses-dev libssl-dev \
             python3 python3-dev python3-pip python3-pyelftools python3-setuptools \
-            rsync swig unzip zlib1g-dev file wget
+            qemu-utils rsync swig unzip zlib1g-dev file wget
           python3 -m pip install --user pyelftools
           python3 -c "import elftools; print(elftools.__file__)"
 
@@ -105,6 +109,9 @@ jobs:
           } > .config
           if [ -d ../files ]; then
             cp -a ../files ./files
+            if [ -d ./files/etc/uci-defaults ]; then
+              chmod 0755 ./files/etc/uci-defaults/*
+            fi
           fi
           if [ -f ../diy-part2.sh ]; then
             bash ../diy-part2.sh
@@ -130,11 +137,27 @@ jobs:
             cp -a openwrt/bin/targets output/targets
           fi
           find output -type d -name packages -prune -exec rm -rf {} + || true
+          cat > output/BUILD_INFO.txt <<EOF
+          Author: ${BUILD_AUTHOR}
+          Device: ${{ matrix.name }}
+          OpenWrt branch: ${OPENWRT_BRANCH}
+          Default IP: ${DEFAULT_IP}
+          Default login: ${DEFAULT_LOGIN}
+          Rootfs part size: ${ROOTFS_PARTSIZE_MB} MB
+          Writable overlay: auto-create remaining space as btrfs extroot on /overlay
+          GitHub repository: ${{ github.repository }}
+          GitHub run number: ${{ github.run_number }}
+          Build time: $(date '+%Y-%m-%d %H:%M:%S %Z')
+          EOF
+          (
+            cd output
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OpenWrt-${{ matrix.name }}-${{ env.OPENWRT_BRANCH }}-${{ github.run_number }}
+          name: ${{ env.BUILD_AUTHOR }}-OpenWrt-${{ matrix.name }}-${{ env.OPENWRT_BRANCH }}-${{ github.run_number }}
           path: output
           retention-days: 14
 
@@ -153,9 +176,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential clang flex bison g++ gawk gcc-multilib \
-            g++-multilib gettext git libelf-dev libncurses-dev libssl-dev \
+            g++-multilib genisoimage gettext git libelf-dev libncurses-dev libssl-dev \
             python3 python3-dev python3-pip python3-pyelftools python3-setuptools \
-            rsync swig unzip zlib1g-dev file wget
+            qemu-utils rsync swig unzip zlib1g-dev file wget
           python3 -m pip install --user pyelftools
           python3 -c "import elftools; print(elftools.__file__)"
 
@@ -198,6 +221,9 @@ jobs:
           } > .config
           if [ -d ../files ]; then
             cp -a ../files ./files
+            if [ -d ./files/etc/uci-defaults ]; then
+              chmod 0755 ./files/etc/uci-defaults/*
+            fi
           fi
           if [ -f ../diy-part2.sh ]; then
             bash ../diy-part2.sh
@@ -213,14 +239,38 @@ jobs:
           openwrt_board: s905d
           openwrt_kernel: 6.12.y
           auto_kernel: true
-          openwrt_size: 1024
-          openwrt_ip: 192.168.1.1
+          openwrt_size: 4096
+          openwrt_ip: ${{ env.DEFAULT_IP }}
           openwrt_files: files
-          builder_name: GitHub Actions
+          builder_name: ${{ env.BUILD_AUTHOR }}
+
+      - name: Add Phicomm N1 output metadata
+        run: |
+          output_path="${PACKAGED_OUTPUTPATH}"
+          if [ -z "$output_path" ] || [ ! -d "$output_path" ]; then
+            echo "PACKAGED_OUTPUTPATH is empty or missing: $output_path"
+            exit 1
+          fi
+          cat > "$output_path/BUILD_INFO.txt" <<EOF
+          Author: ${BUILD_AUTHOR}
+          Device: phicomm-n1
+          OpenWrt branch: ${OPENWRT_BRANCH}
+          Default IP: ${DEFAULT_IP}
+          Default login: ${DEFAULT_LOGIN}
+          Rootfs part size: ${ROOTFS_PARTSIZE_MB} MB
+          Writable overlay: auto-create remaining space as btrfs extroot on /overlay
+          GitHub repository: ${{ github.repository }}
+          GitHub run number: ${{ github.run_number }}
+          Build time: $(date '+%Y-%m-%d %H:%M:%S %Z')
+          EOF
+          (
+            cd "$output_path"
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
 
       - name: Upload Phicomm N1 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OpenWrt-phicomm-n1-${{ env.OPENWRT_BRANCH }}-${{ github.run_number }}
+          name: ${{ env.BUILD_AUTHOR }}-OpenWrt-phicomm-n1-${{ env.OPENWRT_BRANCH }}-${{ github.run_number }}
           path: ${{ env.PACKAGED_OUTPUTPATH }}
           retention-days: 14

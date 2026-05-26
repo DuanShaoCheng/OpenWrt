@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ -x /etc/init.d/mwan3 ]; then
+  /etc/init.d/mwan3 disable
+fi
+
+exit 0

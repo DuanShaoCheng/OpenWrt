@@ -1,0 +1,181 @@
+#!/bin/sh
+
+DATA_LINK="/mnt/data"
+DATA_DIR="/overlay/data"
+DOCKER_DATA="${DATA_LINK}/docker"
+MIN_FREE_MB=512
+STATE_FILE="/etc/.auto-btrfs-extroot-created"
+SCRIPT_NAME="96-auto-btrfs-extroot"
+
+log_msg() {
+  logger -t auto-btrfs-extroot "$*"
+}
+
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+resolve_root_part() {
+  root_arg="$(sed -n 's/.* root=\([^ ]*\).*/\1/p' /proc/cmdline)"
+
+  case "$root_arg" in
+    PARTUUID=*)
+      partuuid="${root_arg#PARTUUID=}"
+      partuuid_lc="$(echo "$partuuid" | tr 'A-F' 'a-f')"
+      for link in "/dev/disk/by-partuuid/${partuuid}" "/dev/disk/by-partuuid/${partuuid_lc}"; do
+        [ -e "$link" ] && readlink -f "$link" && return 0
+      done
+      ;;
+    UUID=*)
+      uuid="${root_arg#UUID=}"
+      [ -e "/dev/disk/by-uuid/${uuid}" ] && readlink -f "/dev/disk/by-uuid/${uuid}" && return 0
+      ;;
+    /dev/*)
+      [ -e "$root_arg" ] && readlink -f "$root_arg" && return 0
+      ;;
+  esac
+
+  awk '$2 == "/rom" || $2 == "/overlay" || $2 == "/" { if ($1 ~ /^\/dev\//) { print $1; exit } }' /proc/mounts
+}
+
+get_disk_and_extroot_part() {
+  root_part="$1"
+  root_num="$(echo "$root_part" | sed -n 's/.*[^0-9]\([0-9][0-9]*\)$/\1/p')"
+
+  [ "$root_num" = "2" ] || return 1
+
+  case "$root_part" in
+    /dev/mmcblk*p2|/dev/nvme*n*p2)
+      disk="$(echo "$root_part" | sed 's/p2$//')"
+      extroot_part="${disk}p3"
+      ;;
+    /dev/sd*2|/dev/vd*2|/dev/xvd*2)
+      disk="$(echo "$root_part" | sed 's/2$//')"
+      extroot_part="${disk}3"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+
+  [ -b "$disk" ] || return 1
+  echo "${disk} ${extroot_part}"
+}
+
+get_fs_type() {
+  block info "$1" 2>/dev/null | sed -n 's/.*TYPE="\([^"]*\)".*/\1/p'
+}
+
+get_uuid() {
+  block info "$1" 2>/dev/null | sed -n 's/.*UUID="\([^"]*\)".*/\1/p'
+}
+
+configure_extroot_and_docker() {
+  extroot_part="$1"
+  uuid="$(get_uuid "$extroot_part")"
+  tmp_mount="/tmp/auto-btrfs-extroot"
+
+  [ -n "$uuid" ] || {
+    log_msg "cannot read UUID from ${extroot_part}"
+    return 1
+  }
+
+  uci -q get fstab.extroot >/dev/null || uci set fstab.extroot='mount'
+  uci set fstab.extroot.target='/overlay'
+  uci set fstab.extroot.uuid="$uuid"
+  uci set fstab.extroot.fstype='btrfs'
+  uci set fstab.extroot.options='rw,noatime,compress=zstd:3'
+  uci set fstab.extroot.enabled='1'
+  uci set fstab.extroot.enabled_fsck='0'
+
+  uci -q get dockerd.globals >/dev/null || uci set dockerd.globals='globals'
+  uci set dockerd.globals.data_root="$DOCKER_DATA"
+
+  uci commit fstab
+  uci commit dockerd
+
+  mkdir -p "$tmp_mount"
+  mount -t btrfs -o rw,noatime,compress=zstd:3 "$extroot_part" "$tmp_mount" || return 1
+
+  tar -C /overlay -cf - . | tar -C "$tmp_mount" -xf -
+  mkdir -p "$tmp_mount/data/docker" "$tmp_mount/upper/mnt"
+  rm -rf "$tmp_mount/upper/mnt/data"
+  ln -sfn "$DATA_DIR" "$tmp_mount/upper/mnt/data"
+  rm -f "$tmp_mount/upper/etc/uci-defaults/${SCRIPT_NAME}"
+  rm -f "$tmp_mount/upper/etc/.auto-btrfs-extroot-created"
+  sync
+  umount "$tmp_mount"
+
+  log_msg "Btrfs extroot prepared on ${extroot_part}. Reboot once to use expanded /overlay."
+}
+
+need_cmd parted || {
+  log_msg "parted is missing; skip auto extroot"
+  exit 0
+}
+
+need_cmd mkfs.btrfs || {
+  log_msg "mkfs.btrfs is missing; skip auto extroot"
+  exit 0
+}
+
+root_part="$(resolve_root_part)"
+[ -n "$root_part" ] || {
+  log_msg "cannot resolve root partition; skip"
+  exit 0
+}
+
+set -- $(get_disk_and_extroot_part "$root_part" 2>/dev/null) || {
+  log_msg "unsupported root partition layout: ${root_part}"
+  exit 0
+}
+
+disk="$1"
+extroot_part="$2"
+created=0
+
+if [ ! -b "$extroot_part" ]; then
+  disk_size="$(parted -sm "$disk" unit MiB print 2>/dev/null | awk -F: 'NR == 2 { gsub(/MiB/, "", $2); print int($2) }')"
+  last_end="$(parted -sm "$disk" unit MiB print 2>/dev/null | awk -F: '/^[0-9]+:/ { end=$3 } END { gsub(/MiB/, "", end); print int(end) }')"
+
+  [ -n "$disk_size" ] && [ -n "$last_end" ] || {
+    log_msg "cannot read partition table for ${disk}"
+    exit 0
+  }
+
+  free_mb=$((disk_size - last_end))
+  [ "$free_mb" -ge "$MIN_FREE_MB" ] || {
+    log_msg "free space ${free_mb}MiB is below ${MIN_FREE_MB}MiB; skip"
+    exit 0
+  }
+
+  start_mb=$((last_end + 1))
+  parted -s "$disk" unit MiB mkpart primary btrfs "${start_mb}" 100% || exit 1
+  touch "$STATE_FILE"
+  partprobe "$disk" >/dev/null 2>&1 || true
+  sleep 3
+  created=1
+fi
+
+if [ ! -b "$extroot_part" ]; then
+  log_msg "created partition table entry but ${extroot_part} is not visible yet; retry next boot"
+  exit 1
+fi
+
+fs_type="$(get_fs_type "$extroot_part")"
+if [ -z "$fs_type" ] && { [ "$created" = "1" ] || [ -f "$STATE_FILE" ]; }; then
+  mkfs.btrfs -f -L extroot "$extroot_part" || exit 1
+  fs_type="btrfs"
+  created=1
+fi
+
+if [ "$fs_type" = "btrfs" ] && { [ "$created" = "1" ] || [ -f "$STATE_FILE" ]; }; then
+  configure_extroot_and_docker "$extroot_part" || exit 1
+  rm -f "$STATE_FILE"
+elif [ "$fs_type" = "btrfs" ]; then
+  log_msg "${extroot_part} already has btrfs; will not auto-use existing partition as extroot"
+else
+  log_msg "${extroot_part} already has filesystem ${fs_type}; will not format"
+fi
+
+exit 0

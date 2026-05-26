@@ -1,0 +1,11 @@
+openwrt/
+output/
+*.img
+*.img.gz
+*.iso
+*.vdi
+*.vmdk
+*.qcow2
+*.manifest
+*.buildinfo
+*.sha256sums
