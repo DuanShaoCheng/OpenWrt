@@ -346,5 +346,6 @@ jobs:
         run: |
           gh release create "${{ steps.package.outputs.tag }}" \
             release-files/* \
+            --repo "${GITHUB_REPOSITORY}" \
             --title "${{ steps.package.outputs.title }}" \
             --notes-file release-notes.md
