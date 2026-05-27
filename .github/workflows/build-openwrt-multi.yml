@@ -306,18 +306,45 @@ jobs:
           fi
 
           mkdir -p release-files
+          max_asset_bytes=$((1900 * 1024 * 1024))
           for artifact in release-artifacts/*; do
             [ -d "$artifact" ] || continue
             name="$(basename "$artifact")"
+            zip_file="release-files/${name}.zip"
             (
               cd "$artifact"
-              zip -r "../../release-files/${name}.zip" .
+              zip -r "../../${zip_file}" .
             )
+            size="$(stat -c%s "$zip_file")"
+            if [ "$size" -ge "$max_asset_bytes" ]; then
+              split -b 1900M -d -a 3 "$zip_file" "${zip_file}.part-"
+              rm -f "$zip_file"
+            fi
           done
+
+          cat > release-files/README_RELEASE_ASSETS.txt <<'EOF'
+          Some assets may be split because GitHub Releases allows each file
+          to be less than 2GB.
+
+          Linux/macOS merge example:
+            cat Duan-OpenWrt-x86-64-generic-*.zip.part-* > Duan-OpenWrt-x86-64-generic.zip
+
+          Windows PowerShell merge example:
+            $parts = Get-ChildItem "Duan-OpenWrt-x86-64-generic-*.zip.part-*" | Sort-Object Name
+            $out = [IO.File]::Create("Duan-OpenWrt-x86-64-generic.zip")
+            foreach ($part in $parts) {
+              $in = [IO.File]::OpenRead($part.FullName)
+              $in.CopyTo($out)
+              $in.Close()
+            }
+            $out.Close()
+          EOF
 
           (
             cd release-files
-            sha256sum *.zip > SHA256SUMS.txt
+            find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 \
+              | sort -z \
+              | xargs -0 sha256sum > SHA256SUMS.txt
           )
 
           cat > release-notes.md <<EOF
@@ -344,6 +371,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
+          gh release delete "${{ steps.package.outputs.tag }}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --cleanup-tag \
+            --yes || true
+
           gh release create "${{ steps.package.outputs.tag }}" \
             release-files/* \
             --repo "${GITHUB_REPOSITORY}" \

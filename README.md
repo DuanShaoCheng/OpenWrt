@@ -98,8 +98,11 @@ Release 里会包含每个设备对应的 zip 资产：
 Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号
 Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号
 Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号
+README_RELEASE_ASSETS.txt
 SHA256SUMS.txt
 ```
+
+如果某个设备包超过 GitHub 单文件 2GB 限制，会自动切成 `.zip.part-000`、`.zip.part-001` 这类分卷，按 `README_RELEASE_ASSETS.txt` 合并后再解压。
 
 每个设备 zip 内会包含：
 

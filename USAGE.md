@@ -18,7 +18,36 @@ Duan-OpenWrt-openwrt-25.12-运行编号
 Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号.zip
 Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号.zip
 Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号.zip
+README_RELEASE_ASSETS.txt
 SHA256SUMS.txt
+```
+
+如果 x86 包太大，Release 里可能不是一个 `.zip`，而是多个分卷：
+
+```text
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号.zip.part-000
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号.zip.part-001
+```
+
+这种情况需要先合并分卷，再解压合并后的 zip。
+
+Linux/macOS：
+
+```sh
+cat Duan-OpenWrt-x86-64-generic-*.zip.part-* > Duan-OpenWrt-x86-64-generic.zip
+```
+
+Windows PowerShell：
+
+```powershell
+$parts = Get-ChildItem "Duan-OpenWrt-x86-64-generic-*.zip.part-*" | Sort-Object Name
+$out = [IO.File]::Create("Duan-OpenWrt-x86-64-generic.zip")
+foreach ($part in $parts) {
+  $in = [IO.File]::OpenRead($part.FullName)
+  $in.CopyTo($out)
+  $in.Close()
+}
+$out.Close()
 ```
 
 不要下载 GitHub 自动生成的 `Source code.zip` 或 `Source code.tar.gz`，那只是源码压缩包，不是固件。
