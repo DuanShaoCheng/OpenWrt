@@ -1,98 +1,128 @@
-# OpenWrt GitHub Actions 自动编译
+# Duan OpenWrt 自动编译
 
-这个仓库用于每天自动编译 OpenWrt 固件。当前先保留 3 个目标：x86/64、NanoPi R2S、斐讯 N1。官方支持的设备直接从 OpenWrt 源码编译；斐讯 N1 使用 `ophub/amlogic-s9xxx-openwrt` 基于 `armsr/armv8` rootfs 二次打包。
+这个仓库使用 GitHub Actions 自动编译自用 OpenWrt 固件。当前保留 3 个目标：x86/64 软路由、FriendlyARM NanoPi R2S、斐讯 N1。
+
+编译完成后，固件会自动发布到 GitHub Releases。Release 里直接展示每个固件文件，不再把一个设备压成一个大 zip，方便直接下载 `combined-efi.img.gz`、`sysupgrade.img.gz`、`vmdk`、`vhdx` 等格式。
 
 刷写和首次启动步骤见：[固件使用说明](USAGE.md)。
 
-## 默认设置
+## 当前设备
 
-- 作者标识：`Duan`
-- OpenWrt 分支：`openwrt-25.12`
-- 自动编译时间：每天北京时间 04:10
-- 固件产物：编译完成后自动发布到 GitHub Releases，同时保留 GitHub Actions artifact 14 天
-- rootfs 分区：默认 4GB，适合 OpenClash + Docker + 主路由插件
-- x86 输出格式：erofs、ext4、squashfs、gzip、EFI/GRUB、ISO、VDI、VMDK、VHDX
-- 可写层扩容：首次启动时自动把系统盘剩余空间创建为 Btrfs 第 3 分区，并配置为 `/overlay` extroot
-- 数据目录：`/mnt/data` 会指向扩容后的 Btrfs 空间，Docker 默认目录为 `/mnt/data/docker`
-- 默认后台地址：`10.0.0.1`
-- 默认登录：用户 `root`，密码 `root`，首次进入后台后建议立即修改
-- 默认包含：LuCI、HTTPS Web UI、中文语言包、软件包管理页面
-- 当前额外包含：OpenClash、Docker、Dockerman、WireGuard、DDNS、SQM、irqbalance、banIP、mwan3、USB/EXT4、Btrfs/F2FS/XFS、自动 Btrfs extroot 扩容、诊断工具
+| 设备 | 用途 | 构建方式 |
+| --- | --- | --- |
+| `x86-64-generic` | 物理软路由、虚拟机、主路由 | OpenWrt 官方 x86/64 generic |
+| `nanopi-r2s` | NanoPi R2S | OpenWrt 官方 rockchip/armv8 |
+| `phicomm-n1` | 斐讯 N1 | 先编译 `armsr/armv8` rootfs，再用 ophub 打包 |
 
-## 当前编译设备
+## 默认配置
 
-- x86/64 generic
-- FriendlyARM NanoPi R2S
-- Phicomm N1，板型代码：`s905d`
+| 项目 | 当前值 |
+| --- | --- |
+| OpenWrt 源码 | `https://github.com/openwrt/openwrt.git` |
+| OpenWrt 分支 | `openwrt-25.12` |
+| 作者标识 | `Duan` |
+| 后台地址 | `http://10.0.0.1` |
+| 登录账号 | `root` |
+| 登录密码 | `root` |
+| rootfs 分区 | `4096 MB` |
+| 自动编译 | 每天北京时间 `04:10` |
+| Release 上传 | 开启 |
+| Actions artifact | 保留 14 天 |
 
-## 当前包含插件
+首次进入后台后建议立即修改密码。
 
-- 中文 LuCI：`luci-i18n-base-zh-cn`、`luci-i18n-firewall-zh-cn`、`luci-i18n-opkg-zh-cn`
-- OpenClash：`luci-app-openclash`
-- WireGuard：`luci-app-wireguard`、`luci-i18n-wireguard-zh-cn`、`kmod-wireguard`、`wireguard-tools`
-- DDNS：`luci-app-ddns`、`luci-i18n-ddns-zh-cn`、`ddns-scripts`、`ddns-scripts-cloudflare`、`ddns-scripts-services`
-- SQM QoS：`sqm-scripts`、`luci-app-sqm`、`luci-i18n-sqm-zh-cn`
-- 多核中断均衡：`irqbalance`、`luci-app-irqbalance`
-- 安全拦截：`banip`、`luci-app-banip`、`luci-i18n-banip-zh-cn`
-- 多 WAN：`mwan3`、`luci-app-mwan3`、`luci-i18n-mwan3-zh-cn`，默认禁用服务
-- Docker：`docker`、`dockerd`、`docker-compose`
-- Docker 管理页面：`luci-app-dockerman`、`luci-i18n-dockerman-zh-cn`
-- 更新文件系统：`kmod-fs-btrfs`、`btrfs-progs`、`parted`、`kmod-fs-f2fs`、`f2fs-tools`、`kmod-fs-xfs`、`xfs-mkfs`、`xfs-fsck`、`xfs-growfs`、`xfs-admin`
-- 自动扩容：如果刷入设备容量大于 4GB 系统镜像，首次启动会尝试把剩余空间创建为第 3 分区，格式化为 Btrfs，复制当前 `/overlay`，并配置为 extroot；重启一次后，后续安装插件、OpenClash 数据、配置和 Docker 数据都会使用扩容后的空间
-- 诊断工具：`curl`、`htop`、`iperf3`、`tcpdump`、`wget-ssl`
+## 内置插件
 
-## 上传到 GitHub
+基础功能：
 
-1. 打开新建好的 GitHub 仓库。
-2. 点击 `uploading an existing file`。
-3. 上传本目录里的所有文件，必须包含隐藏目录 `.github`。
-4. 提交后打开 `Actions` 页面。
-5. 选择 `Build OpenWrt Multi Device`。
-6. 点击 `Run workflow`，可以选择是否编译官方设备和 N1。
+- LuCI Web 后台、HTTPS Web UI、软件包管理页面
+- 中文界面和常用中文语言包
+- OpenClash
+- WireGuard
+- DDNS
+- SQM QoS
+- irqbalance
+- banIP
+- mwan3，多 WAN 服务默认禁用，需要时可手动开启
 
-## 修改设备列表
+Docker 和存储：
 
-编辑：
+- Docker、dockerd、docker-compose
+- LuCI Dockerman 管理页面
+- USB 存储、EXT4、Btrfs、F2FS、XFS
+- `parted`、`btrfs-progs`、`f2fs-tools`、`xfs-*`
+- 首次启动自动把系统盘剩余空间创建为 Btrfs extroot
+
+常用工具：
+
+- `curl`
+- `htop`
+- `iperf3`
+- `tcpdump`
+- `wget-ssl`
+
+## 自动扩容
+
+固件系统分区默认约 4GB。如果刷入 8GB、16GB、32GB 或更大的硬盘、SSD、U 盘、TF 卡，首次启动时会尝试自动处理剩余空间：
 
 ```text
-.github/workflows/build-openwrt-multi.yml
+系统盘剩余空间 -> 第 3 分区 -> Btrfs -> /overlay extroot
 ```
 
-在 `strategy.matrix.include` 里新增或删除设备。每个官方设备需要这几个字段：
+扩容成功后，后续安装的软件包、OpenClash 数据、系统配置、Docker 数据等都会使用扩容后的 `/overlay`。
 
-```yaml
-- name: device-name
-  target: ramips
-  subtarget: mt7621
-  profile: xiaomi_mi-router-4a-gigabit
-  extra_seed: configs/router.seed
+注意：
+
+- 只在没有第 3 分区、且剩余空间大于约 512MB 时执行。
+- 如果已经存在第 3 分区，不会自动格式化，避免误删数据。
+- 首次启动后建议等待 1 到 3 分钟，再重启一次。
+- Docker 默认数据目录为 `/mnt/data/docker`。
+
+## 输出格式
+
+x86 会尽量输出多种格式：
+
+| 文件特征 | 推荐用途 |
+| --- | --- |
+| `combined-efi.img.gz` | UEFI 启动的物理软路由，优先推荐 |
+| `combined.img.gz` | Legacy BIOS 启动的物理软路由 |
+| `.vmdk` | VMware、ESXi |
+| `.vdi` | VirtualBox |
+| `.vhdx` | Hyper-V |
+| `.iso` | 测试、临时启动 |
+| `rootfs.img.gz` | 高级用户手工分区 |
+
+R2S 通常使用文件名包含 `nanopi-r2s` 的 `sysupgrade.img.gz` 或完整镜像。N1 使用 ophub 打包输出的 `.img.gz`。
+
+如果某个 Release 文件超过 GitHub 单文件 2GB 限制，会自动拆成：
+
+```text
+文件名.part-000
+文件名.part-001
 ```
 
-## 修改软件包
+下载后按 Release 里的 `README_RELEASE_ASSETS.txt` 合并即可。
 
-- 所有设备通用软件包：`configs/common.seed`
-- 普通路由器额外软件包：`configs/router.seed`
-- SBC 额外软件包：`configs/sbc.seed`
-- x86 额外软件包：`configs/x86.seed`
-- N1 rootfs 额外设置：`configs/amlogic-rootfs.seed`
+## 手动运行编译
 
-小闪存路由器容易因为软件包过多导致镜像超出分区大小。如果某个设备编译失败，先减少 `configs/common.seed` 或 `configs/router.seed` 里的包。
+1. 打开仓库页面。
+2. 进入 `Actions`。
+3. 选择 `Build OpenWrt Multi Device`。
+4. 点击 `Run workflow`。
+5. 保持 `build_official` 和 `build_n1` 为开启，或按需要关闭某类构建。
+6. 点击绿色的 `Run workflow`。
 
-## 自定义脚本
-
-- `diy-part1.sh`：在更新 feeds 前执行，用来添加第三方 feeds。
-- `diy-part2.sh`：在 `make defconfig` 前执行，用来修改源码、默认 IP、主机名等。
-- `files/`：OpenWrt rootfs 覆盖目录，里面的文件会进入固件。
+如果刚刚修改了 workflow，一定要重新点 `Run workflow` 发起新任务，不要对旧失败任务点 `Re-run failed jobs`，旧任务可能仍然使用旧版本脚本。
 
 ## 下载固件
 
-编译完成后，优先进入仓库右侧或顶部的 `Releases` 下载。每次运行会创建一个类似下面的 Release：
+编译成功后进入 `Releases`，选择最新 Release。名称类似：
 
 ```text
 Duan-OpenWrt-openwrt-25.12-运行编号
 ```
 
-Release 里会直接包含每个设备的固件文件，不再把一个设备打成一个大 zip：
+Release 里会直接列出固件文件：
 
 ```text
 Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-固件文件名
@@ -102,15 +132,44 @@ README_RELEASE_ASSETS.txt
 SHA256SUMS.txt
 ```
 
-如果某个单独文件超过 GitHub 单文件 2GB 限制，会自动切成 `.part-000`、`.part-001` 这类分卷，按 `README_RELEASE_ASSETS.txt` 合并后使用。
+不要下载 GitHub 自动生成的 `Source code.zip` 或 `Source code.tar.gz`，那是源码，不是固件。
 
-Release 里会同时包含：
+## 修改配置
 
-- `BUILD_INFO.txt`：作者、设备、默认地址、默认登录、分区大小和构建时间
-- `SHA256SUMS.txt`：Release 顶层校验文件，方便刷写前核对固件是否完整
-- `artifact-SHA256SUMS.txt`：每个设备构建产物内部的原始校验文件
-- 设备对应的固件文件，具体格式由 OpenWrt 目标自动生成
+常改文件：
 
-不同设备的刷机方式不同，刷写前务必确认文件名里的设备型号和自己的硬件完全一致。
+| 文件 | 作用 |
+| --- | --- |
+| `.github/workflows/build-openwrt-multi.yml` | 设备列表、编译分支、定时任务、Release 发布逻辑 |
+| `configs/common.seed` | 所有设备共同软件包 |
+| `configs/x86.seed` | x86 专用格式、驱动、Docker 等 |
+| `configs/sbc.seed` | R2S、N1 这类 SBC 的额外软件包 |
+| `configs/router.seed` | 后续新增普通路由器时使用 |
+| `configs/amlogic-rootfs.seed` | N1 rootfs 和 ophub 打包需要的设置 |
+| `diy-part1.sh` | feeds 更新前执行，适合添加第三方包源 |
+| `diy-part2.sh` | `make defconfig` 前执行，适合修改源码默认配置 |
+| `files/` | OpenWrt rootfs 覆盖目录，里面文件会进入固件 |
 
-更详细的写盘、升级、首次启动和自动扩容说明见：[固件使用说明](USAGE.md)。
+## 新增设备
+
+官方 OpenWrt 支持的设备，在 `.github/workflows/build-openwrt-multi.yml` 的 `strategy.matrix.include` 里新增一段：
+
+```yaml
+- name: device-name
+  target: ramips
+  subtarget: mt7621
+  profile: xiaomi_mi-router-4a-gigabit
+  extra_seed: configs/router.seed
+```
+
+`target`、`subtarget`、`profile` 必须和 OpenWrt 官方源码里的设备定义一致。小闪存设备不要直接使用当前完整插件包，否则很容易因为空间不足导致编译失败。
+
+## 常见问题
+
+编译失败提示缺少 `python3-pyelftools`：当前 workflow 已安装 `python3-pyelftools`，如果旧任务仍失败，请从最新 `main` 重新发起一次新任务。
+
+Release 上传失败提示 `size must be less than 2147483648`：GitHub 单个 Release 附件限制 2GB。当前 workflow 会把超大文件自动切分，重新运行最新 workflow 即可。
+
+Release 里文件太多：这是正常的。现在采用单文件发布，方便直接下载 UEFI、虚拟机磁盘、R2S/N1 镜像。
+
+找不到后台：电脑手动设置为 `10.0.0.2/24`，访问 `http://10.0.0.1`。x86 多网口设备可以换另一个网口再试。
