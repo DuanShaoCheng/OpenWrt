@@ -31,7 +31,9 @@
 
 首次进入后台后建议立即修改密码。
 
-每次自动编译都会重新拉取 OpenWrt 源码、更新 feeds、安装 feeds 软件包，并重新拉取 OpenClash 等第三方插件源码，然后再打包发布到 Release。
+每次自动编译都会重新拉取 OpenWrt 源码、更新 feeds、安装 feeds 软件包，并重新拉取 OpenClash 等第三方插件源码，然后再打包发布到 Release。下载缓存只缓存源码压缩包，不会固定 OpenWrt、feeds 或插件版本。
+
+当前更新范围是 `openwrt-25.12` 分支内的最新代码；如果以后要切换到新的 OpenWrt 大版本，需要修改 workflow 里的 `OPENWRT_BRANCH`。
 
 ## 内置插件
 
@@ -131,6 +133,7 @@ Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-固件文件名
 Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号-固件文件名
 Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号-固件文件名
 README_RELEASE_ASSETS.txt
+SOURCE_VERSIONS.txt
 SHA256SUMS.txt
 ```
 

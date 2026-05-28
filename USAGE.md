@@ -19,6 +19,7 @@ Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-sq
 Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号-openwrt-rockchip-armv8-friendlyarm_nanopi-r2s-squashfs-sysupgrade.img.gz
 Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号-ophub打包文件名.img.gz
 README_RELEASE_ASSETS.txt
+SOURCE_VERSIONS.txt
 SHA256SUMS.txt
 ```
 
@@ -82,6 +83,8 @@ $out.Close()
 ## 4. 校验文件
 
 下载后建议校验 SHA256。Release 里的 `SHA256SUMS.txt` 是顶层校验文件。
+
+如果想确认本次固件更新到了哪一版，可以查看对应设备的 `SOURCE_VERSIONS.txt`，里面会记录 OpenWrt、feeds 和 OpenClash 的 commit。
 
 Windows PowerShell：
 
