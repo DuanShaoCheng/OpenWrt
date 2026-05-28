@@ -27,6 +27,7 @@ permissions:
   contents: write
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   OPENWRT_REPO: https://github.com/openwrt/openwrt.git
   OPENWRT_BRANCH: openwrt-25.12
   BUILD_AUTHOR: Duan
@@ -60,7 +61,7 @@ jobs:
 
     steps:
       - name: Checkout config repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install build dependencies
         run: |
@@ -78,7 +79,7 @@ jobs:
           git clone --depth 1 --branch "$OPENWRT_BRANCH" "$OPENWRT_REPO" openwrt
 
       - name: Restore downloads cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: openwrt/dl
           key: openwrt-dl-${{ env.OPENWRT_BRANCH }}-${{ matrix.target }}-${{ matrix.subtarget }}-${{ matrix.profile }}-${{ hashFiles('configs/*.seed', 'feeds.conf.default', 'diy-part1.sh') }}
@@ -186,7 +187,7 @@ jobs:
           )
 
       - name: Upload firmware artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.BUILD_AUTHOR }}-OpenWrt-${{ matrix.name }}-${{ env.OPENWRT_BRANCH }}-${{ github.run_number }}
           path: output
@@ -200,7 +201,7 @@ jobs:
 
     steps:
       - name: Checkout config repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install build dependencies
         run: |
@@ -218,7 +219,7 @@ jobs:
           git clone --depth 1 --branch "$OPENWRT_BRANCH" "$OPENWRT_REPO" openwrt
 
       - name: Restore downloads cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: openwrt/dl
           key: openwrt-dl-${{ env.OPENWRT_BRANCH }}-armsr-armv8-n1-${{ hashFiles('configs/*.seed', 'feeds.conf.default', 'diy-part1.sh') }}
@@ -329,7 +330,7 @@ jobs:
           )
 
       - name: Upload Phicomm N1 artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.BUILD_AUTHOR }}-OpenWrt-phicomm-n1-${{ env.OPENWRT_BRANCH }}-${{ github.run_number }}
           path: ${{ env.PACKAGED_OUTPUTPATH }}
@@ -346,10 +347,10 @@ jobs:
 
     steps:
       - name: Checkout config repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: release-artifacts
 
