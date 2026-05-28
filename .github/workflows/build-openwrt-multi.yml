@@ -14,8 +14,8 @@ on:
         type: boolean
         default: true
   schedule:
-    # GitHub Actions cron uses UTC. This runs every day at 04:10 Asia/Shanghai.
-    - cron: "10 20 * * *"
+    # GitHub Actions cron uses UTC. This runs every Monday at 04:10 Asia/Shanghai.
+    - cron: "10 20 * * 0"
 
 concurrency:
   group: openwrt-multi-build
