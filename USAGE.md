@@ -12,36 +12,41 @@ Release 名称类似：
 Duan-OpenWrt-openwrt-25.12-运行编号
 ```
 
-优先下载与你设备对应的 zip：
+Release 会直接展开每个固件文件，不再把一个设备压成一个大 zip。常见文件类似：
 
 ```text
-Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号.zip
-Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号.zip
-Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号.zip
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined-efi.img.gz
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined.img.gz
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined-efi.vmdk
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined-efi.vhdx
+Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号-固件文件名
+Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号-固件文件名
 README_RELEASE_ASSETS.txt
 SHA256SUMS.txt
 ```
 
-如果 x86 包太大，Release 里可能不是一个 `.zip`，而是多个分卷：
+文件名前缀用于标明设备、OpenWrt 分支和 GitHub Actions 运行编号；真正判断刷哪个文件，重点看最后的 OpenWrt 原始文件名。
+
+如果某个单独文件超过 GitHub Release 的 2GB 限制，会自动拆成分卷：
 
 ```text
-Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号.zip.part-000
-Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号.zip.part-001
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-某个固件文件名.part-000
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-某个固件文件名.part-001
 ```
 
-这种情况需要先合并分卷，再解压合并后的 zip。
+这种情况需要先合并分卷。合并后的文件名就是去掉 `.part-000` 这段后的原文件名。
 
 Linux/macOS：
 
 ```sh
-cat Duan-OpenWrt-x86-64-generic-*.zip.part-* > Duan-OpenWrt-x86-64-generic.zip
+cat FILENAME.part-* > FILENAME
 ```
 
 Windows PowerShell：
 
 ```powershell
-$parts = Get-ChildItem "Duan-OpenWrt-x86-64-generic-*.zip.part-*" | Sort-Object Name
-$out = [IO.File]::Create("Duan-OpenWrt-x86-64-generic.zip")
+$parts = Get-ChildItem "FILENAME.part-*" | Sort-Object Name
+$out = [IO.File]::Create("FILENAME")
 foreach ($part in $parts) {
   $in = [IO.File]::OpenRead($part.FullName)
   $in.CopyTo($out)
@@ -59,16 +64,16 @@ $out.Close()
 Windows PowerShell：
 
 ```powershell
-Get-FileHash .\Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号.zip -Algorithm SHA256
+Get-FileHash .\Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined-efi.img.gz -Algorithm SHA256
 ```
 
 Linux/macOS：
 
 ```sh
-sha256sum Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号.zip
+sha256sum Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined-efi.img.gz
 ```
 
-把结果和 Release 里的 `SHA256SUMS.txt` 对照。每个设备 zip 解压后，里面还有一个设备内部的 `SHA256SUMS.txt`。
+把结果和 Release 里的 `SHA256SUMS.txt` 对照。每个设备还会有一个单独的 `artifact-SHA256SUMS.txt`，用于保留构建产物内部的原始校验信息。
 
 ## 3. 默认登录信息
 
@@ -137,7 +142,7 @@ block info
 
 ## 5. x86/64 软路由使用
 
-x86 artifact 解压后会看到多种格式。常用选择如下：
+x86 Release 文件里会看到多种格式。常用选择如下：
 
 ```text
 combined-efi.img.gz   推荐给 UEFI 启动的物理软路由

@@ -297,9 +297,6 @@ jobs:
       - name: Package release assets
         id: package
         run: |
-          sudo apt-get update
-          sudo apt-get install -y zip
-
           tag="${BUILD_AUTHOR}-OpenWrt-${OPENWRT_BRANCH}-${GITHUB_RUN_NUMBER}"
           if [ "${GITHUB_RUN_ATTEMPT}" != "1" ]; then
             tag="${tag}-attempt-${GITHUB_RUN_ATTEMPT}"
@@ -307,31 +304,87 @@ jobs:
 
           mkdir -p release-files
           max_asset_bytes=$((1900 * 1024 * 1024))
+
+          safe_asset_name() {
+            printf '%s' "$1" \
+              | sed 's#[/\\:*?"<>|[:space:]]#-#g' \
+              | sed 's#--*#-#g' \
+              | sed 's#^-\|-$##g'
+          }
+
+          copy_release_asset() {
+            src="$1"
+            asset_name="$(safe_asset_name "$2")"
+            dest="release-files/${asset_name}"
+
+            if [ -e "$dest" ]; then
+              base="${asset_name}"
+              n=1
+              while [ -e "release-files/${n}-${base}" ]; do
+                n=$((n + 1))
+              done
+              dest="release-files/${n}-${base}"
+            fi
+
+            cp -f "$src" "$dest"
+            size="$(stat -c%s "$dest")"
+            if [ "$size" -ge "$max_asset_bytes" ]; then
+              split -b 1900M -d -a 3 "$dest" "${dest}.part-"
+              {
+                echo "$(basename "$dest")"
+                find release-files -maxdepth 1 -type f -name "$(basename "$dest").part-*" -printf "  - %f\n" | sort
+              } >> release-files/SPLIT_ASSETS.txt
+              rm -f "$dest"
+            fi
+          }
+
           for artifact in release-artifacts/*; do
             [ -d "$artifact" ] || continue
             name="$(basename "$artifact")"
-            zip_file="release-files/${name}.zip"
-            (
-              cd "$artifact"
-              zip -r "../../${zip_file}" .
-            )
-            size="$(stat -c%s "$zip_file")"
-            if [ "$size" -ge "$max_asset_bytes" ]; then
-              split -b 1900M -d -a 3 "$zip_file" "${zip_file}.part-"
-              rm -f "$zip_file"
+            base="${name#${BUILD_AUTHOR}-OpenWrt-}"
+            device="${base%-${OPENWRT_BRANCH}-${GITHUB_RUN_NUMBER}}"
+            if [ "$device" = "$base" ]; then
+              device="$name"
             fi
+
+            while IFS= read -r -d '' file; do
+              rel="${file#"$artifact"/}"
+              case "$rel" in
+                */packages/*) continue ;;
+              esac
+
+              short_rel="$rel"
+              case "$short_rel" in
+                "$device"/*) short_rel="${short_rel#"$device"/}" ;;
+              esac
+
+              case "$short_rel" in
+                BUILD_INFO.txt)
+                  asset="${BUILD_AUTHOR}-OpenWrt-${device}-${OPENWRT_BRANCH}-${GITHUB_RUN_NUMBER}-BUILD_INFO.txt"
+                  ;;
+                SHA256SUMS.txt)
+                  asset="${BUILD_AUTHOR}-OpenWrt-${device}-${OPENWRT_BRANCH}-${GITHUB_RUN_NUMBER}-artifact-SHA256SUMS.txt"
+                  ;;
+                *)
+                  asset="${BUILD_AUTHOR}-OpenWrt-${device}-${OPENWRT_BRANCH}-${GITHUB_RUN_NUMBER}-$(basename "$short_rel")"
+                  ;;
+              esac
+
+              copy_release_asset "$file" "$asset"
+            done < <(find "$artifact" -type f -print0 | sort -z)
           done
 
           cat > release-files/README_RELEASE_ASSETS.txt <<'EOF'
-          Some assets may be split because GitHub Releases allows each file
-          to be less than 2GB.
+          Release assets are uploaded as separate files, not as one device zip.
+          GitHub Releases requires every single asset to be smaller than 2GB.
+          If one file is too large, it is split into .part-000, .part-001, ...
 
-          Linux/macOS merge example:
-            cat Duan-OpenWrt-x86-64-generic-*.zip.part-* > Duan-OpenWrt-x86-64-generic.zip
+          Linux/macOS merge example for a split file:
+            cat FILENAME.part-* > FILENAME
 
-          Windows PowerShell merge example:
-            $parts = Get-ChildItem "Duan-OpenWrt-x86-64-generic-*.zip.part-*" | Sort-Object Name
-            $out = [IO.File]::Create("Duan-OpenWrt-x86-64-generic.zip")
+          Windows PowerShell merge example for a split file:
+            $parts = Get-ChildItem "FILENAME.part-*" | Sort-Object Name
+            $out = [IO.File]::Create("FILENAME")
             foreach ($part in $parts) {
               $in = [IO.File]::OpenRead($part.FullName)
               $in.CopyTo($out)

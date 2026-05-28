@@ -92,22 +92,23 @@
 Duan-OpenWrt-openwrt-25.12-运行编号
 ```
 
-Release 里会包含每个设备对应的 zip 资产：
+Release 里会直接包含每个设备的固件文件，不再把一个设备打成一个大 zip：
 
 ```text
-Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号
-Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号
-Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-固件文件名
+Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号-固件文件名
+Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号-固件文件名
 README_RELEASE_ASSETS.txt
 SHA256SUMS.txt
 ```
 
-如果某个设备包超过 GitHub 单文件 2GB 限制，会自动切成 `.zip.part-000`、`.zip.part-001` 这类分卷，按 `README_RELEASE_ASSETS.txt` 合并后再解压。
+如果某个单独文件超过 GitHub 单文件 2GB 限制，会自动切成 `.part-000`、`.part-001` 这类分卷，按 `README_RELEASE_ASSETS.txt` 合并后使用。
 
-每个设备 zip 内会包含：
+Release 里会同时包含：
 
 - `BUILD_INFO.txt`：作者、设备、默认地址、默认登录、分区大小和构建时间
-- `SHA256SUMS.txt`：顶层校验文件，方便刷写前核对固件是否完整
+- `SHA256SUMS.txt`：Release 顶层校验文件，方便刷写前核对固件是否完整
+- `artifact-SHA256SUMS.txt`：每个设备构建产物内部的原始校验文件
 - 设备对应的固件文件，具体格式由 OpenWrt 目标自动生成
 
 不同设备的刷机方式不同，刷写前务必确认文件名里的设备型号和自己的硬件完全一致。
