@@ -84,7 +84,7 @@ $out.Close()
 
 下载后建议校验 SHA256。Release 里的 `SHA256SUMS.txt` 是顶层校验文件。
 
-如果想确认本次固件更新到了哪一版，可以查看对应设备的 `SOURCE_VERSIONS.txt`，里面会记录 OpenWrt、feeds 和 OpenClash 的 commit。
+如果想确认本次固件更新到了哪一版，可以查看对应设备的 `SOURCE_VERSIONS.txt`，里面会记录 OpenWrt、feeds、OpenClash 和 luci-app-cloudflarespeedtest 的 commit。
 
 Windows PowerShell：
 

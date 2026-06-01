@@ -8,3 +8,7 @@ set -e
 if [ ! -d package/openclash ]; then
   git clone --depth 1 https://github.com/vernesong/OpenClash.git package/openclash
 fi
+
+if [ ! -d package/luci-app-cloudflarespeedtest ]; then
+  git clone --depth 1 https://github.com/stevenjoezhang/luci-app-cloudflarespeedtest.git package/luci-app-cloudflarespeedtest
+fi

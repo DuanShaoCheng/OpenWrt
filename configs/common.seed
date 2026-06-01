@@ -1,6 +1,7 @@
 # Common packages for all generated firmware.
 CONFIG_PACKAGE_luci=y
 CONFIG_PACKAGE_luci-ssl=y
+CONFIG_PACKAGE_luci-compat=y
 CONFIG_PACKAGE_luci-app-opkg=y
 CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y
@@ -10,6 +11,10 @@ CONFIG_PACKAGE_luci-i18n-opkg-zh-cn=y
 # CONFIG_PACKAGE_dnsmasq is not set
 CONFIG_PACKAGE_dnsmasq-full=y
 CONFIG_PACKAGE_luci-app-openclash=y
+
+# Cloudflare preferred IP testing UI. The core binary is downloaded by
+# the plugin on first run unless /usr/bin/cdnspeedtest already exists.
+CONFIG_PACKAGE_luci-app-cloudflarespeedtest=y
 
 # WireGuard VPN.
 CONFIG_PACKAGE_luci-app-wireguard=y
