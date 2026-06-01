@@ -13,9 +13,9 @@ Duan-OpenWrt-openwrt-25.12-运行编号
 Release 里会直接列出固件文件，不再按设备打成一个大 zip。常见文件名类似：
 
 ```text
-Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined-efi.img.gz
-Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined.img.gz
-Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-squashfs-combined-efi.vmdk
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-erofs-combined-efi.img.gz
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-erofs-combined.img.gz
+Duan-OpenWrt-x86-64-generic-openwrt-25.12-运行编号-openwrt-x86-64-generic-image-efi.iso
 Duan-OpenWrt-nanopi-r2s-openwrt-25.12-运行编号-openwrt-rockchip-armv8-friendlyarm_nanopi-r2s-squashfs-sysupgrade.img.gz
 Duan-OpenWrt-phicomm-n1-openwrt-25.12-运行编号-ophub打包文件名.img.gz
 README_RELEASE_ASSETS.txt
@@ -31,13 +31,10 @@ x86/64 软路由：
 
 | 文件特征 | 用途 |
 | --- | --- |
-| `combined-efi.img.gz` | UEFI 启动的物理软路由，优先推荐 |
-| `combined.img.gz` | Legacy BIOS 启动的物理软路由 |
-| `.vmdk` | VMware、ESXi |
-| `.vdi` | VirtualBox |
-| `.vhdx` | Hyper-V |
-| `.iso` | 测试或临时启动 |
-| `rootfs.img.gz` | 高级用户手工分区 |
+| `erofs-combined-efi.img.gz` | UEFI 启动的物理软路由，优先推荐 |
+| `erofs-combined.img.gz` | Legacy BIOS 启动的物理软路由 |
+| `image-efi.iso` | UEFI ISO，测试或临时启动 |
+| `image.iso` | Legacy BIOS ISO，测试或临时启动 |
 
 NanoPi R2S：
 
@@ -128,9 +125,9 @@ IP：10.0.0.2
 
 写入物理硬盘、SSD 或 U 盘：
 
-1. 下载 `combined-efi.img.gz` 或 `combined.img.gz`。
-2. UEFI 机器优先用 `combined-efi.img.gz`。
-3. Legacy BIOS 机器使用 `combined.img.gz`。
+1. 下载 `erofs-combined-efi.img.gz` 或 `erofs-combined.img.gz`。
+2. UEFI 机器优先用 `erofs-combined-efi.img.gz`。
+3. Legacy BIOS 机器使用 `erofs-combined.img.gz`。
 4. 使用 balenaEtcher、Rufus、USBImager 等工具写入目标盘。
 5. 如果写盘工具不识别 `.img.gz`，先用 7-Zip 解压成 `.img` 再写入。
 6. 写入会清空目标盘，务必确认磁盘没有选错。
@@ -138,15 +135,7 @@ IP：10.0.0.2
 8. 访问 `http://10.0.0.1`。
 9. 首次启动后等待 1 到 3 分钟，再重启一次，让自动扩容生效。
 
-虚拟机：
-
-| 平台 | 推荐文件 |
-| --- | --- |
-| VMware、ESXi | `.vmdk` |
-| VirtualBox | `.vdi` |
-| Hyper-V | `.vhdx` |
-
-如果虚拟机启动后没有网络，优先检查虚拟网卡类型和桥接/旁路由网络配置。
+ISO 主要用于测试或临时启动，不建议作为长期主系统。虚拟机如果需要专用磁盘格式，可以后续重新开启 VMDK/VDI/VHDX 输出，或自行把 `.img` 转换成对应格式。
 
 ## 7. NanoPi R2S 刷写
 
@@ -248,11 +237,11 @@ Docker 数据在哪里：
 /mnt/data/docker
 ```
 
-应该选 ext4 还是 squashfs：
+应该选哪种 x86 文件：
 
-- 普通用户优先选择 `squashfs combined` 或设备推荐的完整镜像。
-- x86 UEFI 物理机优先 `combined-efi.img.gz`。
-- 不要单独刷 `rootfs.img.gz`，除非明确知道如何手工分区。
+- x86 UEFI 物理机优先 `erofs-combined-efi.img.gz`。
+- x86 Legacy BIOS 机器使用 `erofs-combined.img.gz`。
+- ISO 主要用于测试或临时启动。
 
 OpenClash 或 Docker 数据多怎么办：
 

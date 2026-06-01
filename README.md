@@ -2,7 +2,7 @@
 
 这个仓库使用 GitHub Actions 自动编译自用 OpenWrt 固件。当前保留 3 个目标：x86/64 软路由、FriendlyARM NanoPi R2S、斐讯 N1。
 
-编译完成后，固件会自动发布到 GitHub Releases。Release 里直接展示每个固件文件，不再把一个设备压成一个大 zip，方便直接下载 `combined-efi.img.gz`、`sysupgrade.img.gz`、`vmdk`、`vhdx` 等格式。
+编译完成后，固件会自动发布到 GitHub Releases。Release 里直接展示常用固件文件，不再把一个设备压成一个大 zip。x86 只发布 EROFS 的 `.img.gz` 和 `.iso`，R2S/N1 发布对应设备镜像。
 
 刷写和首次启动步骤见：[固件使用说明](USAGE.md)。
 
@@ -85,17 +85,14 @@ Docker 和存储：
 
 ## 输出格式
 
-x86 会尽量输出多种格式：
+x86 只发布现代 EROFS 镜像：
 
 | 文件特征 | 推荐用途 |
 | --- | --- |
-| `combined-efi.img.gz` | UEFI 启动的物理软路由，优先推荐 |
-| `combined.img.gz` | Legacy BIOS 启动的物理软路由 |
-| `.vmdk` | VMware、ESXi |
-| `.vdi` | VirtualBox |
-| `.vhdx` | Hyper-V |
-| `.iso` | 测试、临时启动 |
-| `rootfs.img.gz` | 高级用户手工分区 |
+| `erofs-combined-efi.img.gz` | UEFI 启动的物理软路由，优先推荐 |
+| `erofs-combined.img.gz` | Legacy BIOS 启动的物理软路由 |
+| `image-efi.iso` | UEFI ISO，测试或临时启动 |
+| `image.iso` | Legacy BIOS ISO，测试或临时启动 |
 
 R2S 通常使用文件名包含 `nanopi-r2s` 的 `sysupgrade.img.gz` 或完整镜像。N1 使用 ophub 打包输出的 `.img.gz`。
 
@@ -176,6 +173,6 @@ SHA256SUMS.txt
 
 Release 上传失败提示 `size must be less than 2147483648`：GitHub 单个 Release 附件限制 2GB。当前 workflow 会把超大文件自动切分，重新运行最新 workflow 即可。
 
-Release 里文件太多：这是正常的。现在采用单文件发布，方便直接下载 UEFI、虚拟机磁盘、R2S/N1 镜像。
+Release 里文件太多：x86 已收窄为 EROFS 的 IMG/ISO；R2S/N1 仍会保留对应设备镜像和少量说明/校验文件。
 
 找不到后台：电脑手动设置为 `10.0.0.2/24`，访问 `http://10.0.0.1`。x86 多网口设备可以换另一个网口再试。

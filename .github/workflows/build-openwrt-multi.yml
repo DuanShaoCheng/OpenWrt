@@ -410,6 +410,34 @@ jobs:
             fi
           }
 
+          should_publish_asset() {
+            device="$1"
+            short_rel="$2"
+            file_name="$(basename "$short_rel")"
+
+            case "$short_rel" in
+              BUILD_INFO.txt|SOURCE_VERSIONS.txt)
+                return 0
+                ;;
+            esac
+
+            case "$device" in
+              x86-64-generic)
+                case "$file_name" in
+                  *erofs-combined-efi.img.gz|\
+                  *erofs-combined.img.gz|\
+                  *image-efi.iso|\
+                  *image.iso)
+                    return 0
+                    ;;
+                esac
+                return 1
+                ;;
+            esac
+
+            return 0
+          }
+
           for artifact in release-artifacts/*; do
             [ -d "$artifact" ] || continue
             name="$(basename "$artifact")"
@@ -429,6 +457,8 @@ jobs:
               case "$short_rel" in
                 "$device"/*) short_rel="${short_rel#"$device"/}" ;;
               esac
+
+              should_publish_asset "$device" "$short_rel" || continue
 
               case "$short_rel" in
                 BUILD_INFO.txt)
