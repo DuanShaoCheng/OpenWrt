@@ -433,9 +433,98 @@ jobs:
                 esac
                 return 1
                 ;;
+              nanopi-r2s)
+                case "$file_name" in
+                  *squashfs-sysupgrade.img.gz)
+                    return 0
+                    ;;
+                esac
+                return 1
+                ;;
+              phicomm-n1)
+                case "$file_name" in
+                  openwrt_amlogic_s905d*.img.gz)
+                    return 0
+                    ;;
+                esac
+                return 1
+                ;;
             esac
 
             return 0
+          }
+
+          release_asset_name() {
+            device="$1"
+            short_rel="$2"
+            file_name="$(basename "$short_rel")"
+
+            case "$device" in
+              x86-64-generic)
+                device_short="x86"
+                ;;
+              nanopi-r2s)
+                device_short="r2s"
+                ;;
+              phicomm-n1)
+                device_short="n1"
+                ;;
+              *)
+                device_short="$device"
+                ;;
+            esac
+
+            case "$short_rel" in
+              BUILD_INFO.txt)
+                echo "${device_short}-BUILD_INFO.txt"
+                return
+                ;;
+              SOURCE_VERSIONS.txt)
+                echo "${device_short}-SOURCE_VERSIONS.txt"
+                return
+                ;;
+            esac
+
+            case "$device" in
+              x86-64-generic)
+                case "$file_name" in
+                  *erofs-combined-efi.img.gz)
+                    echo "x86-erofs-uefi.img.gz"
+                    return
+                    ;;
+                  *erofs-combined.img.gz)
+                    echo "x86-erofs-bios.img.gz"
+                    return
+                    ;;
+                  *image-efi.iso)
+                    echo "x86-uefi.iso"
+                    return
+                    ;;
+                  *image.iso)
+                    echo "x86-bios.iso"
+                    return
+                    ;;
+                esac
+                ;;
+              nanopi-r2s)
+                case "$file_name" in
+                  *squashfs-sysupgrade.img.gz)
+                    echo "r2s-squashfs-sysupgrade.img.gz"
+                    return
+                    ;;
+                esac
+                ;;
+              phicomm-n1)
+                case "$file_name" in
+                  openwrt_amlogic_s905d*.img.gz)
+                    echo "n1-s905d.img.gz"
+                    return
+                    ;;
+                esac
+                ;;
+            esac
+
+            echo "${device_short}-${file_name}"
           }
 
           for artifact in release-artifacts/*; do
@@ -460,18 +549,7 @@ jobs:
 
               should_publish_asset "$device" "$short_rel" || continue
 
-              case "$short_rel" in
-                BUILD_INFO.txt)
-                  asset="${BUILD_AUTHOR}-OpenWrt-${device}-${OPENWRT_BRANCH}-${GITHUB_RUN_NUMBER}-BUILD_INFO.txt"
-                  ;;
-                SHA256SUMS.txt)
-                  asset="${BUILD_AUTHOR}-OpenWrt-${device}-${OPENWRT_BRANCH}-${GITHUB_RUN_NUMBER}-artifact-SHA256SUMS.txt"
-                  ;;
-                *)
-                  asset="${BUILD_AUTHOR}-OpenWrt-${device}-${OPENWRT_BRANCH}-${GITHUB_RUN_NUMBER}-$(basename "$short_rel")"
-                  ;;
-              esac
-
+              asset="$(release_asset_name "$device" "$short_rel")"
               copy_release_asset "$file" "$asset"
             done < <(find "$artifact" -type f -print0 | sort -z)
           done
