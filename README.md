@@ -135,11 +135,29 @@ x86-bios.iso
 r2s-squashfs-sysupgrade.img.gz
 n1-s905d.img.gz
 README_RELEASE_ASSETS.txt
+x86-BUILD_INFO.txt
+r2s-BUILD_INFO.txt
+n1-BUILD_INFO.txt
 x86-SOURCE_VERSIONS.txt
 r2s-SOURCE_VERSIONS.txt
 n1-SOURCE_VERSIONS.txt
 SHA256SUMS.txt
 ```
+
+文件含义：
+
+| 文件名 | 含义 |
+| --- | --- |
+| `x86-erofs-uefi.img.gz` | x86/64 UEFI 物理软路由镜像，推荐写入 SSD、硬盘或 U 盘 |
+| `x86-erofs-bios.img.gz` | x86/64 Legacy BIOS 物理软路由镜像，适合老机器 |
+| `x86-uefi.iso` | x86/64 UEFI ISO，主要用于测试或临时启动 |
+| `x86-bios.iso` | x86/64 Legacy BIOS ISO，主要用于测试或临时启动 |
+| `r2s-squashfs-sysupgrade.img.gz` | NanoPi R2S 固件，首次写 TF 卡和 LuCI 后台升级都优先用它 |
+| `n1-s905d.img.gz` | 斐讯 N1 固件，适合 U 盘启动，确认正常后再考虑写入 eMMC |
+| `README_RELEASE_ASSETS.txt` | Release 附件说明，包含大文件分卷合并方法 |
+| `SHA256SUMS.txt` | 所有 Release 文件的 SHA256 校验值 |
+| `x86-BUILD_INFO.txt`、`r2s-BUILD_INFO.txt`、`n1-BUILD_INFO.txt` | 对应设备的构建信息、默认地址、登录信息和分区说明 |
+| `x86-SOURCE_VERSIONS.txt`、`r2s-SOURCE_VERSIONS.txt`、`n1-SOURCE_VERSIONS.txt` | 对应设备使用的 OpenWrt、feeds 和第三方插件 commit |
 
 不要下载 GitHub 自动生成的 `Source code.zip` 或 `Source code.tar.gz`，那是源码，不是固件。
 
