@@ -80,7 +80,7 @@ $out.Close()
 
 下载后建议校验 SHA256。Release 里的 `SHA256SUMS.txt` 是顶层校验文件。
 
-如果想确认本次固件更新到了哪一版，可以查看对应设备的 `x86-SOURCE_VERSIONS.txt`、`r2s-SOURCE_VERSIONS.txt` 或 `n1-SOURCE_VERSIONS.txt`，里面会记录 OpenWrt、feeds、OpenClash 和 luci-app-cloudflarespeedtest 的 commit。
+如果想确认本次固件更新到了哪一版，可以查看对应设备的 `x86-SOURCE_VERSIONS.txt`、`r2s-SOURCE_VERSIONS.txt` 或 `n1-SOURCE_VERSIONS.txt`，里面会记录 OpenWrt、feeds、OpenClash、luci-app-cloudflarespeedtest 和 Argon 主题的 commit。
 
 Windows PowerShell：
 
@@ -111,6 +111,14 @@ sha256sum 固件文件名
 ```text
 系统 -> 管理权
 ```
+
+固件默认使用中文界面和 Argon 主题。如果浏览器仍显示英文，可以在 LuCI 里进入：
+
+```text
+System -> System -> Language and Style
+```
+
+把语言切到中文，并确认主题为 `argon`。
 
 如果电脑没有自动获取到地址，可以临时设置电脑网卡：
 

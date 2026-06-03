@@ -31,7 +31,7 @@
 
 首次进入后台后建议立即修改密码。
 
-每次自动编译都会重新拉取 OpenWrt 源码、更新 feeds、安装 feeds 软件包，并重新拉取 OpenClash、luci-app-cloudflarespeedtest 等第三方插件源码，然后再打包发布到 Release。下载缓存只缓存源码压缩包，不会固定 OpenWrt、feeds 或插件版本。
+每次自动编译都会重新拉取 OpenWrt 源码、更新 feeds、安装 feeds 软件包，并重新拉取 OpenClash、luci-app-cloudflarespeedtest、Argon 主题等第三方插件源码，然后再打包发布到 Release。下载缓存只缓存源码压缩包，不会固定 OpenWrt、feeds 或插件版本。
 
 当前更新范围是 `openwrt-25.12` 分支内的最新代码；如果以后要切换到新的 OpenWrt 大版本，需要修改 workflow 里的 `OPENWRT_BRANCH`。
 
@@ -40,7 +40,8 @@
 基础功能：
 
 - LuCI Web 后台、HTTPS Web UI、软件包管理页面
-- 中文界面和常用中文语言包
+- 默认中文界面和常用中文语言包
+- Argon 主题和 Argon 配置页面
 - OpenClash
 - Cloudflare Speed Test 优选 IP 页面
 - WireGuard

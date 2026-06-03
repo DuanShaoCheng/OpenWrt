@@ -175,7 +175,9 @@ jobs:
             echo "Third-party packages:"
             for package_dir in \
               "openclash:OpenClash" \
-              "luci-app-cloudflarespeedtest:luci-app-cloudflarespeedtest"; do
+              "luci-app-cloudflarespeedtest:luci-app-cloudflarespeedtest" \
+              "luci-theme-argon:luci-theme-argon" \
+              "luci-app-argon-config:luci-app-argon-config"; do
               dir="${package_dir%%:*}"
               label="${package_dir#*:}"
               if [ -d "openwrt/package/${dir}/.git" ]; then
@@ -324,7 +326,9 @@ jobs:
             echo "Third-party packages:"
             for package_dir in \
               "openclash:OpenClash" \
-              "luci-app-cloudflarespeedtest:luci-app-cloudflarespeedtest"; do
+              "luci-app-cloudflarespeedtest:luci-app-cloudflarespeedtest" \
+              "luci-theme-argon:luci-theme-argon" \
+              "luci-app-argon-config:luci-app-argon-config"; do
               dir="${package_dir%%:*}"
               label="${package_dir#*:}"
               if [ -d "openwrt/package/${dir}/.git" ]; then
