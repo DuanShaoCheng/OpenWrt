@@ -27,6 +27,7 @@
 | rootfs 分区 | `4096 MB` |
 | 自动编译 | 每周一北京时间 `04:10` |
 | Release 上传 | 开启 |
+| Release 保留 | 自动只保留最新一次，旧 Release 和旧 tag 会清理 |
 | Actions artifact | 保留 14 天 |
 
 首次进入后台后建议立即修改密码。
