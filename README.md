@@ -199,4 +199,6 @@ Release 上传失败提示 `size must be less than 2147483648`：GitHub 单个 R
 
 Release 里文件太多：当前已收窄为常用镜像短文件名；x86 只保留 EROFS 的 IMG/ISO，R2S 只保留 squashfs sysupgrade，N1 只保留 s905d 镜像。
 
+N1 编译到 `grub2`、`golang-bootstrap` 或 `rust` 失败并提示磁盘不足：N1 的 `armsr/armv8` rootfs 加上 Docker 等组件会占用较多 runner 磁盘。当前 workflow 会在编译前自动清理 GitHub runner 预装的大型 SDK，如果旧任务仍失败，请从最新 `main` 重新发起一次新任务。
+
 找不到后台：电脑手动设置为 `10.0.0.2/24`，访问 `http://10.0.0.1`。x86 多网口设备可以换另一个网口再试。

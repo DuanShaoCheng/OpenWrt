@@ -74,6 +74,25 @@ jobs:
           python3 -m pip install --user pyelftools
           python3 -c "import elftools; print(elftools.__file__)"
 
+      - name: Free runner disk space
+        run: |
+          echo "Disk before cleanup:"
+          df -h
+          sudo rm -rf \
+            /usr/local/lib/android \
+            /usr/local/share/boost \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /opt/az \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/local/.ghcup || true
+          sudo docker image prune -af || true
+          sudo docker builder prune -af || true
+          sudo apt-get clean
+          echo "Disk after cleanup:"
+          df -h
+
       - name: Clone OpenWrt
         run: |
           git clone --depth 1 --branch "$OPENWRT_BRANCH" "$OPENWRT_REPO" openwrt
@@ -221,6 +240,25 @@ jobs:
             qemu-utils rsync swig unzip zlib1g-dev file wget
           python3 -m pip install --user pyelftools
           python3 -c "import elftools; print(elftools.__file__)"
+
+      - name: Free runner disk space
+        run: |
+          echo "Disk before cleanup:"
+          df -h
+          sudo rm -rf \
+            /usr/local/lib/android \
+            /usr/local/share/boost \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /opt/az \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/local/.ghcup || true
+          sudo docker image prune -af || true
+          sudo docker builder prune -af || true
+          sudo apt-get clean
+          echo "Disk after cleanup:"
+          df -h
 
       - name: Clone OpenWrt
         run: |
