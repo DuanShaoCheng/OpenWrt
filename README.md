@@ -54,7 +54,7 @@
 
 Docker 和存储：
 
-- Docker、dockerd、docker-compose
+- Docker、dockerd、docker-compose，默认禁用服务，避免开机生成旧版 iptables 兼容规则
 - LuCI Dockerman 管理页面
 - USB 存储、EXT4、Btrfs、F2FS、XFS
 - `parted`、`btrfs-progs`、`f2fs-tools`、`xfs-*`
@@ -83,7 +83,7 @@ Docker 和存储：
 - 只在没有第 3 分区、且剩余空间大于约 512MB 时执行。
 - 如果已经存在第 3 分区，不会自动格式化，避免误删数据。
 - 首次启动后建议等待 1 到 3 分钟，再重启一次。
-- Docker 默认数据目录为 `/mnt/data/docker`。
+- Docker 默认数据目录为 `/mnt/data/docker`，需要使用时手动启用 `dockerd` 服务。
 
 ## 输出格式
 

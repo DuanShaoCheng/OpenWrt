@@ -35,6 +35,14 @@ resolve_root_part() {
       ;;
   esac
 
+  for dev in /dev/mmcblk*p* /dev/nvme*n*p* /dev/sd*[0-9] /dev/vd*[0-9] /dev/xvd*[0-9]; do
+    [ -b "$dev" ] || continue
+    block info "$dev" 2>/dev/null | grep -q 'MOUNT="/rom"' && {
+      readlink -f "$dev"
+      return 0
+    }
+  done
+
   awk '$2 == "/rom" || $2 == "/overlay" || $2 == "/" { if ($1 ~ /^\/dev\//) { print $1; exit } }' /proc/mounts
 }
 
@@ -90,6 +98,8 @@ configure_extroot_and_docker() {
 
   uci -q get dockerd.globals >/dev/null || uci set dockerd.globals='globals'
   uci set dockerd.globals.data_root="$DOCKER_DATA"
+  uci set dockerd.globals.iptables='0'
+  uci set dockerd.globals.ip6tables='0'
 
   uci commit fstab
   uci commit dockerd

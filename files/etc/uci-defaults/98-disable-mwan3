@@ -1,7 +1,17 @@
 #!/bin/sh
 
 if [ -x /etc/init.d/mwan3 ]; then
+  /etc/init.d/mwan3 stop
   /etc/init.d/mwan3 disable
+fi
+
+if [ -x /etc/init.d/dockerd ]; then
+  uci -q get dockerd.globals >/dev/null || uci set dockerd.globals='globals'
+  uci set dockerd.globals.iptables='0'
+  uci set dockerd.globals.ip6tables='0'
+  uci commit dockerd
+  /etc/init.d/dockerd stop
+  /etc/init.d/dockerd disable
 fi
 
 exit 0
