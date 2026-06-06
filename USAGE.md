@@ -101,7 +101,7 @@ $out.Close()
 
 下载后建议校验 SHA256。Release 里的 `SHA256SUMS.txt` 是顶层校验文件。
 
-如果想确认本次固件更新到了哪一版，可以查看对应设备的 `x86-SOURCE_VERSIONS.txt`、`r2s-SOURCE_VERSIONS.txt` 或 `n1-SOURCE_VERSIONS.txt`，里面会记录 OpenWrt、feeds、OpenClash、luci-app-cloudflarespeedtest 和 Argon 主题的 commit。
+如果想确认本次固件更新到了哪一版，可以查看对应设备的 `x86-SOURCE_VERSIONS.txt`、`r2s-SOURCE_VERSIONS.txt` 或 `n1-SOURCE_VERSIONS.txt`，里面会记录 OpenWrt、feeds、PassWall、OpenClash、luci-app-cloudflarespeedtest 和 Argon 主题的 commit。
 
 Windows PowerShell：
 
