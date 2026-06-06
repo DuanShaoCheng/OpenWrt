@@ -6,13 +6,25 @@ DOCKER_DATA="${DATA_LINK}/docker"
 MIN_FREE_MB=512
 STATE_FILE="/etc/.auto-btrfs-extroot-created"
 SCRIPT_NAME="96-auto-btrfs-extroot"
+AUTO_REBOOT_SECONDS=20
 
 log_msg() {
   logger -t auto-btrfs-extroot "$*"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >>/tmp/auto-btrfs-extroot.log
 }
 
 need_cmd() {
   command -v "$1" >/dev/null 2>&1
+}
+
+schedule_reboot() {
+  seconds="${1:-$AUTO_REBOOT_SECONDS}"
+  log_msg "scheduled reboot in ${seconds}s to activate expanded overlay"
+  ( sleep "$seconds"; reboot ) >/dev/null 2>&1 &
+}
+
+overlay_is_btrfs_extroot() {
+  awk '$2 == "/overlay" && $3 == "btrfs" { found = 1 } END { exit !found }' /proc/mounts
 }
 
 resolve_root_part() {
@@ -119,6 +131,11 @@ configure_extroot_and_docker() {
   log_msg "Btrfs extroot prepared on ${extroot_part}. Reboot once to use expanded /overlay."
 }
 
+if overlay_is_btrfs_extroot; then
+  log_msg "btrfs extroot is already active on /overlay"
+  exit 0
+fi
+
 need_cmd parted || {
   log_msg "parted is missing; skip auto extroot"
   exit 0
@@ -168,7 +185,8 @@ if [ ! -b "$extroot_part" ]; then
 fi
 
 if [ ! -b "$extroot_part" ]; then
-  log_msg "created partition table entry but ${extroot_part} is not visible yet; retry next boot"
+  log_msg "created partition table entry but ${extroot_part} is not visible yet; retry after reboot"
+  schedule_reboot
   exit 1
 fi
 
@@ -182,6 +200,7 @@ fi
 if [ "$fs_type" = "btrfs" ] && { [ "$created" = "1" ] || [ -f "$STATE_FILE" ]; }; then
   configure_extroot_and_docker "$extroot_part" || exit 1
   rm -f "$STATE_FILE"
+  schedule_reboot
 elif [ "$fs_type" = "btrfs" ]; then
   log_msg "${extroot_part} already has btrfs; will not auto-use existing partition as extroot"
 else
